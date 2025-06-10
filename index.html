@@ -10,38 +10,27 @@
   <div id="label-container"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.3.0"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
-
+<script src="https://storage.googleapis.com/teachable-machine/teachablemachine-image.min.js"></script>
+  
   <script type="text/javascript">
     const URL = "./";
+
     let model, webcam, labelContainer, maxPredictions;
 
     async function init() {
       const modelURL = URL + "model.json";
       const metadataURL = URL + "metadata.json";
 
-      try {
-        model = await tmImage.load(modelURL, metadataURL);
-      } catch (e) {
-        console.error("Model load failed:", e);
-        return;
-      }
-
+      model = await tmImage.load(modelURL, metadataURL);
       webcam = new tmImage.Webcam(200, 200, true);
-
-      try {
-        await webcam.setup();
-        await webcam.play();
-      } catch (e) {
-        console.error("Webcam error:", e);
-        return;
-      }
-
+      await webcam.setup();
+      await webcam.play();
       window.requestAnimationFrame(loop);
-      document.getElementById("webcam-container").appendChild(webcam.canvas);
 
+      document.getElementById("webcam-container").appendChild(webcam.canvas);
       labelContainer = document.getElementById("label-container");
       maxPredictions = model.getTotalClasses();
+      
       for (let i = 0; i < maxPredictions; i++) {
         labelContainer.appendChild(document.createElement("div"));
       }
@@ -64,3 +53,4 @@
   </script>
 </body>
 </html>
+
