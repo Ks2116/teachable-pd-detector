@@ -6,10 +6,12 @@
   <body>
     <h1>Teachable Machine Image Model</h1>
     <button type="button" onclick="init()">Start</button>
+    <button type="button" onclick="useFrontCamera()">Front Camera</button>
+    <button type="button" onclick="useBackCamera()">Back Camera</button>
     <div id="webcam-container"></div>
     <div id="label-container"></div>
 
-    <!-- ✅ Correct TensorFlow and Teachable Machine Image Library -->
+    <!-- Teachable Machine + TensorFlow -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.3.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
 
@@ -23,21 +25,23 @@
         const metadataURL = URL + "metadata.json";
 
         model = await window.tmImage.load(modelURL, metadataURL);
-        webcam = new window.tmImage.Webcam(200, 200, true); // width, height, flip
-        await webcam.setup(); // request access to the webcam
+
+        webcam = new window.tmImage.Webcam(200, 200, true); // default front
+        await webcam.setup();
         await webcam.play();
         window.requestAnimationFrame(loop);
 
         document.getElementById("webcam-container").appendChild(webcam.canvas);
         labelContainer = document.getElementById("label-container");
         maxPredictions = model.getTotalClasses();
+
         for (let i = 0; i < maxPredictions; i++) {
           labelContainer.appendChild(document.createElement("div"));
         }
       }
 
       async function loop() {
-        webcam.update(); // update the webcam frame
+        webcam.update();
         await predict();
         window.requestAnimationFrame(loop);
       }
@@ -50,6 +54,31 @@
           labelContainer.childNodes[i].innerHTML = classPrediction;
         }
       }
+
+      // ✅ New camera switching functions
+      async function useFrontCamera() {
+        if (webcam) {
+          await webcam.stop();
+        }
+        webcam = new window.tmImage.Webcam(200, 200, true, false);
+        await webcam.setup();
+        await webcam.play();
+        document.getElementById("webcam-container").innerHTML = "";
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+      }
+
+      async function useBackCamera() {
+        if (webcam) {
+          await webcam.stop();
+        }
+        webcam = new window.tmImage.Webcam(200, 200, false, true);
+        await webcam.setup();
+        await webcam.play();
+        document.getElementById("webcam-container").innerHTML = "";
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+      }
     </script>
   </body>
 </html>
+
+      
