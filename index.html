@@ -1,56 +1,55 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Teachable Machine Image Model</title>
-</head>
-<body>
-  <h1>Teachable Machine Image Model</h1>
-  <button type="button" onclick="init()">Start</button>
-  <div id="webcam-container"></div>
-  <div id="label-container"></div>
+  <head>
+    <title>Teachable Machine Image Model</title>
+  </head>
+  <body>
+    <h1>Teachable Machine Image Model</h1>
+    <button type="button" onclick="init()">Start</button>
+    <div id="webcam-container"></div>
+    <div id="label-container"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.3.0"></script>
-<script src="https://storage.googleapis.com/teachable-machine/teachablemachine-image.min.js"></script>
-  
-  <script type="text/javascript">
-    const URL = "./";
+    <!-- ✅ Correct TensorFlow and Teachable Machine Image Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.3.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
 
-    let model, webcam, labelContainer, maxPredictions;
+    <script type="text/javascript">
+      const URL = "./";
 
-    async function init() {
-      const modelURL = URL + "model.json";
-      const metadataURL = URL + "metadata.json";
+      let model, webcam, labelContainer, maxPredictions;
 
-      model = await tmImage.load(modelURL, metadataURL);
-      webcam = new tmImage.Webcam(200, 200, true);
-      await webcam.setup();
-      await webcam.play();
-      window.requestAnimationFrame(loop);
+      async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
 
-      document.getElementById("webcam-container").appendChild(webcam.canvas);
-      labelContainer = document.getElementById("label-container");
-      maxPredictions = model.getTotalClasses();
-      
-      for (let i = 0; i < maxPredictions; i++) {
-        labelContainer.appendChild(document.createElement("div"));
+        model = await window.tmImage.load(modelURL, metadataURL);
+        webcam = new window.tmImage.Webcam(200, 200, true); // width, height, flip
+        await webcam.setup(); // request access to the webcam
+        await webcam.play();
+        window.requestAnimationFrame(loop);
+
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+        labelContainer = document.getElementById("label-container");
+        maxPredictions = model.getTotalClasses();
+        for (let i = 0; i < maxPredictions; i++) {
+          labelContainer.appendChild(document.createElement("div"));
+        }
       }
-    }
 
-    async function loop() {
-      webcam.update();
-      await predict();
-      window.requestAnimationFrame(loop);
-    }
-
-    async function predict() {
-      const prediction = await model.predict(webcam.canvas);
-      for (let i = 0; i < maxPredictions; i++) {
-        const classPrediction =
-          prediction[i].className + ": " + prediction[i].probability.toFixed(2);
-        labelContainer.childNodes[i].innerHTML = classPrediction;
+      async function loop() {
+        webcam.update(); // update the webcam frame
+        await predict();
+        window.requestAnimationFrame(loop);
       }
-    }
-  </script>
-</body>
+
+      async function predict() {
+        const prediction = await model.predict(webcam.canvas);
+        for (let i = 0; i < maxPredictions; i++) {
+          const classPrediction =
+            prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+          labelContainer.childNodes[i].innerHTML = classPrediction;
+        }
+      }
+    </script>
+  </body>
 </html>
-
