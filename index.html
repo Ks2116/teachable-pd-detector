@@ -11,7 +11,7 @@
     <div id="webcam-container"></div>
     <div id="label-container"></div>
 
-    <!-- Teachable Machine + TensorFlow -->
+    <!-- TensorFlow + Teachable Machine Image Library -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.3.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
 
@@ -26,11 +26,12 @@
 
         model = await window.tmImage.load(modelURL, metadataURL);
 
-        webcam = new window.tmImage.Webcam(200, 200, true); // default front
+        webcam = new window.tmImage.Webcam(200, 200, true);
         await webcam.setup();
         await webcam.play();
         window.requestAnimationFrame(loop);
 
+        document.getElementById("webcam-container").innerHTML = "";
         document.getElementById("webcam-container").appendChild(webcam.canvas);
         labelContainer = document.getElementById("label-container");
         maxPredictions = model.getTotalClasses();
@@ -55,25 +56,38 @@
         }
       }
 
-      // ✅ New camera switching functions
+      // ✅ Front camera
       async function useFrontCamera() {
-        if (webcam) {
-          await webcam.stop();
-        }
-        webcam = new window.tmImage.Webcam(200, 200, true, false);
-        await webcam.setup();
+        if (webcam) await webcam.stop();
+
+        const flip = true;
+        const constraints = {
+          audio: false,
+          video: { facingMode: "user" }
+        };
+
+        webcam = new window.tmImage.Webcam(200, 200, flip);
+        await webcam.setup(constraints);
         await webcam.play();
+
         document.getElementById("webcam-container").innerHTML = "";
         document.getElementById("webcam-container").appendChild(webcam.canvas);
       }
 
+      // ✅ Back camera
       async function useBackCamera() {
-        if (webcam) {
-          await webcam.stop();
-        }
-        webcam = new window.tmImage.Webcam(200, 200, false, true);
-        await webcam.setup();
+        if (webcam) await webcam.stop();
+
+        const flip = false;
+        const constraints = {
+          audio: false,
+          video: { facingMode: { exact: "environment" } }
+        };
+
+        webcam = new window.tmImage.Webcam(200, 200, flip);
+        await webcam.setup(constraints);
         await webcam.play();
+
         document.getElementById("webcam-container").innerHTML = "";
         document.getElementById("webcam-container").appendChild(webcam.canvas);
       }
