@@ -1,98 +1,90 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Teachable Machine Image Model</title>
-  </head>
-  <body>
-    <h1>Teachable Machine Image Model</h1>
-    <button type="button" onclick="init()">Start</button>
-    <button type="button" onclick="useFrontCamera()">Front Camera</button>
-    <button type="button" onclick="useBackCamera()">Back Camera</button>
-    <div id="webcam-container"></div>
-    <div id="label-container"></div>
+<head>
+  <title>Teachable Machine with Real Camera Switch</title>
+</head>
+<body>
+  <h1>Teachable Machine Image Model</h1>
+  <button onclick="startWithCamera('user')">Front Camera</button>
+  <button onclick="startWithCamera('environment')">Back Camera</button>
+  <div id="webcam-container"></div>
+  <div id="label-container"></div>
 
-    <!-- TensorFlow + Teachable Machine Image Library -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.3.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.3.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
 
-    <script type="text/javascript">
-      const URL = "./";
+  <script type="text/javascript">
+    const URL = "./"; // model files in root
+    let model, webcam, labelContainer, maxPredictions;
+    let videoStream; // for manual camera stream
 
-      let model, webcam, labelContainer, maxPredictions;
+    async function loadModel() {
+      const modelURL = URL + "model.json";
+      const metadataURL = URL + "metadata.json";
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
+    }
 
-      async function init() {
-        const modelURL = URL + "model.json";
-        const metadataURL = URL + "metadata.json";
+    async function startWithCamera(facingMode) {
+      if (videoStream) {
+        // stop previous stream if exists
+        videoStream.getTracks().forEach(track => track.stop());
+      }
 
-        model = await window.tmImage.load(modelURL, metadataURL);
+      if (!model) {
+        await loadModel();
+      }
 
-        webcam = new window.tmImage.Webcam(200, 200, true);
-        await webcam.setup();
+      // Get specific camera stream
+      const constraints = {
+        audio: false,
+        video: {
+          facingMode: { exact: facingMode }
+        }
+      };
+
+      try {
+        videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+        // Manually attach video stream to canvas via tmImage.Webcam
+        webcam = new tmImage.Webcam(200, 200, false); // flip false for both
+        await webcam.setup({ video: { facingMode: { exact: facingMode } } });
         await webcam.play();
-        window.requestAnimationFrame(loop);
 
         document.getElementById("webcam-container").innerHTML = "";
         document.getElementById("webcam-container").appendChild(webcam.canvas);
-        labelContainer = document.getElementById("label-container");
-        maxPredictions = model.getTotalClasses();
 
+        labelContainer = document.getElementById("label-container");
+        labelContainer.innerHTML = "";
         for (let i = 0; i < maxPredictions; i++) {
           labelContainer.appendChild(document.createElement("div"));
         }
-      }
 
-      async function loop() {
-        webcam.update();
-        await predict();
         window.requestAnimationFrame(loop);
+      } catch (error) {
+        alert("Error accessing camera: " + error.message);
+        console.error(error);
       }
+    }
 
-      async function predict() {
-        const prediction = await model.predict(webcam.canvas);
-        for (let i = 0; i < maxPredictions; i++) {
-          const classPrediction =
-            prediction[i].className + ": " + prediction[i].probability.toFixed(2);
-          labelContainer.childNodes[i].innerHTML = classPrediction;
-        }
+    async function loop() {
+      webcam.update();
+      await predict();
+      window.requestAnimationFrame(loop);
+    }
+
+    async function predict() {
+      const prediction = await model.predict(webcam.canvas);
+      for (let i = 0; i < maxPredictions; i++) {
+        const classPrediction =
+          prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+        labelContainer.childNodes[i].innerHTML = classPrediction;
       }
-
-      // ✅ Front camera
-      async function useFrontCamera() {
-        if (webcam) await webcam.stop();
-
-        const flip = true;
-        const constraints = {
-          audio: false,
-          video: { facingMode: "user" }
-        };
-
-        webcam = new window.tmImage.Webcam(200, 200, flip);
-        await webcam.setup(constraints);
-        await webcam.play();
-
-        document.getElementById("webcam-container").innerHTML = "";
-        document.getElementById("webcam-container").appendChild(webcam.canvas);
-      }
-
-      // ✅ Back camera
-      async function useBackCamera() {
-        if (webcam) await webcam.stop();
-
-        const flip = false;
-        const constraints = {
-          audio: false,
-          video: { facingMode: { exact: "environment" } }
-        };
-
-        webcam = new window.tmImage.Webcam(200, 200, flip);
-        await webcam.setup(constraints);
-        await webcam.play();
-
-        document.getElementById("webcam-container").innerHTML = "";
-        document.getElementById("webcam-container").appendChild(webcam.canvas);
-      }
-    </script>
-  </body>
+    }
+  </script>
+</body>
 </html>
+
 
       
